@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aurora Borealis Sighting Observation Log</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .star-active { color: #fbbf24; }
+  .star-inactive { color: #374151; }
+</style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen p-4">
+<script>
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+</script>
+
+<div class="max-w-5xl mx-auto">
+  <!-- Header with aurora gradient -->
+  <div class="text-center mb-6 relative overflow-hidden rounded-2xl py-8 px-4" style="background:linear-gradient(135deg,#0a0a1a 0%,#0d2137 30%,#0a3d2e 60%,#1a0a2e 100%)">
+    <div class="absolute inset-0" style="background:radial-gradient(ellipse at 30% 50%,rgba(16,185,129,0.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(139,92,246,0.1) 0%,transparent 60%)"></div>
+    <h1 class="relative text-3xl font-bold text-emerald-400 mb-1">Aurora Borealis Observation Log</h1>
+    <p class="relative text-gray-400 text-sm">オーロラ目撃記録を管理・分析するログ帳</p>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-4">
+    <!-- Add Sighting Form -->
+    <div class="lg:col-span-1">
+      <div class="bg-gray-900 rounded-xl p-4 border border-gray-700 mb-4" id="formCard">
+        <h2 class="text-sm font-semibold text-gray-300 mb-4" id="formTitle">Record New Sighting</h2>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Date & Time</label>
+            <input type="datetime-local" id="fDate" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Location</label>
+            <input type="text" id="fLocation" placeholder="e.g. Tromsø, Norway" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Kp Index (0-9)</label>
+            <input type="range" id="fKp" min="0" max="9" value="4" class="w-full accent-emerald-500">
+            <div class="flex justify-between text-xs text-gray-500 mt-0.5">
+              <span>0</span><span class="text-emerald-400 font-bold" id="kpVal">Kp: 4</span><span>9</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Colors Observed</label>
+            <div class="grid grid-cols-2 gap-1.5">
+              <label class="flex items-center gap-2 cursor-pointer bg-gray-800 rounded-lg px-2 py-1.5 hover:bg-gray-700">
+                <input type="checkbox" id="c_green" value="green" class="accent-green-500"><span class="text-xs">🟢 Green</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer bg-gray-800 rounded-lg px-2 py-1.5 hover:bg-gray-700">
+                <input type="checkbox" id="c_red" value="red" class="accent-red-500"><span class="text-xs">🔴 Red</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer bg-gray-800 rounded-lg px-2 py-1.5 hover:bg-gray-700">
+                <input type="checkbox" id="c_purple" value="purple" class="accent-purple-500"><span class="text-xs">🟣 Purple</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer bg-gray-800 rounded-lg px-2 py-1.5 hover:bg-gray-700">
+                <input type="checkbox" id="c_white" value="white" class="accent-gray-300"><span class="text-xs">⚪ White</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Intensity (1-5)</label>
+            <div class="flex gap-1" id="starRating">
+              <span class="star text-2xl cursor-pointer star-inactive" data-v="1">★</span>
+              <span class="star text-2xl cursor-pointer star-inactive" data-v="2">★</span>
+              <span class="star text-2xl cursor-pointer star-inactive" data-v="3">★</span>
+              <span class="star text-2xl cursor-pointer star-inactive" data-v="4">★</span>
+              <span class="star text-2xl cursor-pointer star-inactive" data-v="5">★</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Notes</label>
+            <textarea id="fNotes" rows="2" placeholder="Conditions, camera settings, impressions..."
+              class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="saveSighting()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg transition-colors text-sm">Save Sighting</button>
+            <button onclick="cancelEdit()" id="cancelBtn" class="hidden px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="bg-gray-900 rounded-xl p-4 border border-gray-700">
+        <h2 class="text-sm font-semibold text-gray-300 mb-3">Statistics</h2>
+        <div id="statsBox" class="space-y-2 text-sm text-gray-500 italic">No sightings yet</div>
+      </div>
+    </div>
+
+    <!-- Sightings List + Calendar -->
+    <div class="lg:col-span-2 space-y-4">
+      <!-- Calendar Heatmap -->
+      <div class="bg-gray-900 rounded-xl p-4 border border-gray-700">
+        <h2 class="text-sm font-semibold text-gray-300 mb-3">Monthly Heatmap</h2>
+        <div id="heatmap" class="text-sm text-gray-500 italic">No data yet</div>
+      </div>
+
+      <!-- Sightings -->
+      <div class="bg-gray-900 rounded-xl p-4 border border-gray-700">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-sm font-semibold text-gray-300">Sightings Log</h2>
+          <span id="totalCount" class="text-xs text-gray-500">0 sightings</span>
+        </div>
+        <div id="sightingsList" class="space-y-2 text-sm text-gray-500 italic">No sightings recorded yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let sightings = JSON.parse(localStorage.getItem('aurora_sightings') || '[]');
+let editId = null;
+let currentStars = 3;
+
+// Default date
+document.getElementById('fDate').value = new Date().toISOString().slice(0,16);
+
+// Kp slider
+document.getElementById('fKp').addEventListener('input', function() {
+  document.getElementById('kpVal').textContent = 'Kp: ' + this.value;
+});
+
+// Stars
+document.querySelectorAll('.star').forEach(s => {
+  s.addEventListener('click', () => {
+    currentStars = parseInt(s.dataset.v);
+    updateStars();
+  });
+  s.addEventListener('mouseover', () => {
+    document.querySelectorAll('.star').forEach(ss => {
+      ss.className = 'star text-2xl cursor-pointer ' + (parseInt(ss.dataset.v) <= parseInt(s.dataset.v) ? 'star-active' : 'star-inactive');
+    });
+  });
+  s.addEventListener('mouseout', () => updateStars());
+});
+function updateStars() {
+  document.querySelectorAll('.star').forEach(ss => {
+    ss.className = 'star text-2xl cursor-pointer ' + (parseInt(ss.dataset.v) <= currentStars ? 'star-active' : 'star-inactive');
+  });
+}
+updateStars();
+
+const COLOR_MAP = { green:'🟢', red:'🔴', purple:'🟣', white:'⚪' };
+const KP_COLORS = ['text-gray-400','text-gray-400','text-yellow-400','text-yellow-400','text-orange-400','text-orange-400','text-red-400','text-red-400','text-red-500','text-purple-400'];
+
+function saveSighting() {
+  const date = document.getElementById('fDate').value;
+  const location = document.getElementById('fLocation').value.trim();
+  if (!date || !location) { alert('Date and Location are required'); return; }
+  const colors = ['green','red','purple','white'].filter(c => document.getElementById('c_'+c).checked);
+  const sighting = {
+    id: editId || Date.now(),
+    date,
+    location,
+    kp: parseInt(document.getElementById('fKp').value),
+    colors,
+    intensity: currentStars,
+    notes: document.getElementById('fNotes').value.trim()
+  };
+  if (editId) {
+    const idx = sightings.findIndex(s => s.id === editId);
+    if (idx !== -1) sightings[idx] = sighting;
+    editId = null;
+  } else {
+    sightings.unshift(sighting);
+  }
+  save();
+  resetForm();
+  render();
+}
+
+function editSighting(id) {
+  const s = sightings.find(x => x.id===id);
+  if (!s) return;
+  editId = id;
+  document.getElementById('fDate').value = s.date;
+  document.getElementById('fLocation').value = s.location;
+  document.getElementById('fKp').value = s.kp;
+  document.getElementById('kpVal').textContent = 'Kp: ' + s.kp;
+  ['green','red','purple','white'].forEach(c => document.getElementById('c_'+c).checked = s.colors.includes(c));
+  currentStars = s.intensity;
+  updateStars();
+  document.getElementById('fNotes').value = s.notes;
+  document.getElementById('formTitle').textContent = 'Edit Sighting';
+  document.getElementById('cancelBtn').classList.remove('hidden');
+  document.getElementById('formCard').scrollIntoView({behavior:'smooth'});
+}
+
+function cancelEdit() {
+  editId = null;
+  resetForm();
+}
+
+function deleteSighting(id) {
+  if (!confirm('Delete this sighting?')) return;
+  sightings = sightings.filter(s => s.id !== id);
+  save();
+  render();
+}
+
+function resetForm() {
+  document.getElementById('fDate').value = new Date().toISOString().slice(0,16);
+  document.getElementById('fLocation').value = '';
+  document.getElementById('fKp').value = 4;
+  document.getElementById('kpVal').textContent = 'Kp: 4';
+  ['green','red','purple','white'].forEach(c => document.getElementById('c_'+c).checked = false);
+  currentStars = 3; updateStars();
+  document.getElementById('fNotes').value = '';
+  document.getElementById('formTitle').textContent = 'Record New Sighting';
+  document.getElementById('cancelBtn').classList.add('hidden');
+}
+
+function save() { localStorage.setItem('aurora_sightings', JSON.stringify(sightings)); }
+
+function render() {
+  renderList();
+  renderStats();
+  renderHeatmap();
+}
+
+function renderList() {
+  const el = document.getElementById('sightingsList');
+  document.getElementById('totalCount').textContent = sightings.length + ' sightings';
+  if (sightings.length === 0) { el.innerHTML = '<p class="text-gray-500 italic">No sightings recorded yet</p>'; return; }
+  el.innerHTML = sightings.map(s => `
+    <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 hover:border-gray-600">
+      <div class="flex justify-between items-start">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-emerald-400 font-semibold text-sm">${escapeHtml(s.location)}</span>
+            <span class="text-xs text-gray-500">${escapeHtml(s.date.replace('T',' '))}</span>
+          </div>
+          <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+            <span class="text-xs ${KP_COLORS[s.kp] || 'text-gray-400'} font-bold">Kp${escapeHtml(String(s.kp))}</span>
+            <span class="text-xs">${s.colors.map(c => COLOR_MAP[c]||'').join('')}</span>
+            <span class="text-xs">${'★'.repeat(s.intensity)}<span class="text-gray-700">${'★'.repeat(5-s.intensity)}</span></span>
+          </div>
+          ${s.notes ? `<p class="text-xs text-gray-400 mt-1 italic">${escapeHtml(s.notes)}</p>` : ''}
+        </div>
+        <div class="flex gap-1 ml-2">
+          <button onclick="editSighting(${s.id})" class="text-xs text-gray-500 hover:text-blue-400 transition-colors px-2 py-1">✏️</button>
+          <button onclick="deleteSighting(${s.id})" class="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderStats() {
+  const el = document.getElementById('statsBox');
+  if (sightings.length === 0) { el.innerHTML = '<p class="text-gray-500 italic">No sightings yet</p>'; return; }
+  const maxKp = Math.max(...sightings.map(s=>s.kp));
+  const colorCount = {};
+  sightings.forEach(s => s.colors.forEach(c => colorCount[c] = (colorCount[c]||0)+1));
+  const topColor = Object.entries(colorCount).sort((a,b)=>b[1]-a[1])[0];
+  const avgKp = (sightings.reduce((a,s)=>a+s.kp,0)/sightings.length).toFixed(1);
+  el.innerHTML = `
+    <div class="flex justify-between py-1 border-b border-gray-800"><span class="text-gray-400">Total Sightings</span><span class="text-emerald-400 font-bold">${escapeHtml(String(sightings.length))}</span></div>
+    <div class="flex justify-between py-1 border-b border-gray-800"><span class="text-gray-400">Best Kp Observed</span><span class="${KP_COLORS[maxKp]} font-bold">Kp${escapeHtml(String(maxKp))}</span></div>
+    <div class="flex justify-between py-1 border-b border-gray-800"><span class="text-gray-400">Avg Kp</span><span class="text-gray-300 font-bold">${escapeHtml(String(avgKp))}</span></div>
+    <div class="flex justify-between py-1"><span class="text-gray-400">Most Common Color</span><span class="text-gray-300">${topColor ? escapeHtml(COLOR_MAP[topColor[0]]+' '+topColor[0]) : '—'}</span></div>`;
+}
+
+function renderHeatmap() {
+  const el = document.getElementById('heatmap');
+  if (sightings.length === 0) { el.innerHTML = '<p class="text-gray-500 italic">No data yet</p>'; return; }
+  const byMonth = {};
+  sightings.forEach(s => {
+    const ym = s.date.slice(0,7);
+    byMonth[ym] = (byMonth[ym]||0)+1;
+  });
+  const months = Object.keys(byMonth).sort();
+  const maxCount = Math.max(...Object.values(byMonth));
+  const intensities = ['bg-gray-800','bg-emerald-900','bg-emerald-700','bg-emerald-500','bg-emerald-300'];
+  el.innerHTML = `<div class="flex flex-wrap gap-2">${months.map(m => {
+    const cnt = byMonth[m];
+    const lvl = Math.min(Math.round(cnt/maxCount*4), 4);
+    return `<div class="flex flex-col items-center gap-1">
+      <div class="${intensities[lvl]} w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold ${lvl>2?'text-gray-900':'text-gray-300'}">${escapeHtml(String(cnt))}</div>
+      <div class="text-xs text-gray-500">${escapeHtml(m)}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// Seed demo data if empty
+if (sightings.length === 0) {
+  const demos = [
+    { id:1, date:'2026-09-15T22:30', location:'Tromsø, Norway', kp:7, colors:['green','purple'], intensity:5, notes:'Incredible curtains of light' },
+    { id:2, date:'2026-08-20T23:00', location:'Abisko, Sweden', kp:5, colors:['green'], intensity:3, notes:'Faint but steady arc' },
+    { id:3, date:'2026-10-05T21:45', location:'Fairbanks, Alaska', kp:8, colors:['green','red','white'], intensity:5, notes:'G3 storm, brilliant show' },
+    { id:4, date:'2026-10-12T22:15', location:'Reykjavik, Iceland', kp:4, colors:['green'], intensity:2, notes:'Short glimpse through clouds' },
+  ];
+  sightings = demos;
+  save();
+}
+
+render();
+</script>
+</body>
+</html>
